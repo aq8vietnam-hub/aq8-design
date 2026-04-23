@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AQ8 · Internal Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Outfit:wght@300;400;500;600;700;800&family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════
+   TOKENS
+═══════════════════════════════════ */
+:root {
+  --ink:    #0a0c14;
+  --ink2:   #12151f;
+  --ink3:   #1a1e2e;
+  --ink4:   #222840;
+  --mist:   rgba(255,255,255,0.06);
+  --mist2:  rgba(255,255,255,0.10);
+  --text:   #e8eaf2;
+  --text2:  #9096b0;
+  --text3:  #52597a;
+
+  --teal:   #2dd4bf;
+  --pink:   #f472b6;
+  --violet: #a78bfa;
+  --amber:  #fbbf24;
+  --coral:  #fb7185;
+  --lime:   #86efac;
+  --sky:    #38bdf8;
+  --orange: #fb923c;
+
+  /* AQ8 Brand */
+  --brand:  #7B2D2D;
+  --brand2: #9B3D3D;
+  --ivory:  #F5F0EB;
+  --grad: linear-gradient(135deg, #7B2D2D 0%, #C4705A 100%);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--ink);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── NOISE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.025;
+}
+
+/* ── GLOW BLOBS ── */
+.blob {
+  position: fixed; border-radius: 50%;
+  filter: blur(80px); opacity: 0.12; pointer-events: none; z-index: 0;
+  animation: drift 12s ease-in-out infinite alternate;
+}
+.blob1 { width: 500px; height: 500px; background: var(--brand);  top: -100px; left: -150px; animation-delay: 0s; }
+.blob2 { width: 400px; height: 400px; background: #C4705A;       bottom: -80px; right: -100px; animation-delay: -5s; }
+.blob3 { width: 300px; height: 300px; background: var(--pink);   top: 40%; left: 50%; animation-delay: -3s; opacity: 0.07; }
+@keyframes drift { from { transform: translate(0,0) scale(1); } to { transform: translate(30px,20px) scale(1.08); } }
+
+/* ── LAYOUT ── */
+.wrap { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: 0 32px; }
+
+/* ═══════════════════════════════════
+   HEADER / NAV
+═══════════════════════════════════ */
+header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(10,12,20,0.75);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--mist);
+}
+.nav-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 32px; max-width: 1280px; margin: 0 auto;
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'Outfit', sans-serif; font-weight: 700;
+  font-size: 16px; letter-spacing: 0px;
+  text-decoration: none; color: var(--text);
+}
+.nav-logo-badge {
+  width: 30px; height: 30px; border-radius: 7px;
+  background: var(--grad);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; color: #fff;
+}
+.nav-right {
+  display: flex; align-items: center; gap: 6px;
+}
+.nav-pill {
+  font-size: 12px; font-weight: 500; color: var(--text2);
+  padding: 5px 12px; border-radius: 20px;
+  border: 1px solid transparent;
+  text-decoration: none; transition: all 0.15s;
+}
+.nav-pill:hover { background: var(--mist); color: var(--text); border-color: var(--mist2); }
+.nav-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--text3);
+  background: var(--mist); border: 1px solid var(--mist2);
+  padding: 5px 10px; border-radius: 20px; margin-left: 6px;
+}
+
+/* ═══════════════════════════════════
+   HERO
+═══════════════════════════════════ */
+.hero {
+  padding: 64px 32px 48px;
+  max-width: 1280px; margin: 0 auto;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 24px; flex-wrap: wrap;
+}
+.hero-left { flex: 1; min-width: 260px; }
+.hero-eyebrow {
+  font-size: 11px; font-weight: 600; letter-spacing: 2px;
+  text-transform: uppercase; color: #C4705A;
+  margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+}
+.hero-eyebrow::before {
+  content: ''; display: inline-block; width: 20px; height: 1px; background: #C4705A;
+}
+.hero-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(36px, 5vw, 58px);
+  font-weight: 800; line-height: 1.05;
+  letter-spacing: -2px; color: var(--text);
+  margin-bottom: 14px;
+}
+.hero-title .accent { background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.hero-sub { font-size: 15px; color: var(--text2); line-height: 1.6; max-width: 480px; }
+
+.hero-right {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+}
+.hero-stat {
+  text-align: right;
+}
+.hero-stat-val {
+  font-family: 'Outfit', sans-serif;
+  font-size: 36px; font-weight: 800; color: var(--text);
+  letter-spacing: -2px;
+}
+.hero-stat-lbl { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+.hero-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; color: var(--text3);
+  background: var(--mist); border: 1px solid var(--mist2);
+  padding: 6px 14px; border-radius: 20px;
+}
+
+/* ── DIVIDER ── */
+.section-divider {
+  max-width: 1280px; margin: 0 auto;
+  padding: 0 32px; margin-bottom: 32px;
+}
+.divider-line {
+  height: 1px; background: linear-gradient(90deg, var(--brand) 0%, #C4705A 40%, transparent 100%);
+  opacity: 0.3;
+}
+
+/* ═══════════════════════════════════
+   SECTION LABEL
+═══════════════════════════════════ */
+.section-label {
+  font-family: 'Outfit', sans-serif;
+  font-size: 10px; font-weight: 600; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--text3);
+  margin-bottom: 14px; display: flex; align-items: center; gap: 10px;
+}
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--mist2); }
+
+/* ═══════════════════════════════════
+   QUICK LINKS — TOP ROW (large cards)
+═══════════════════════════════════ */
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 10px;
+}
+@media(max-width:900px){ .quick-grid{ grid-template-columns: repeat(2,1fr); } }
+@media(max-width:500px){ .quick-grid{ grid-template-columns: 1fr; } }
+
+.qcard {
+  background: var(--ink2);
+  border: 1px solid var(--mist);
+  border-radius: 14px;
+  padding: 22px 20px;
+  text-decoration: none;
+  display: flex; flex-direction: column; gap: 10px;
+  position: relative; overflow: hidden;
+  transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+  cursor: pointer;
+}
+.qcard::before {
+  content: '';
+  position: absolute; inset: 0; border-radius: 14px;
+  background: var(--card-color, var(--teal));
+  opacity: 0; transition: opacity 0.18s;
+}
+.qcard:hover { transform: translateY(-3px); border-color: var(--mist2); box-shadow: 0 12px 40px rgba(0,0,0,0.35); }
+.qcard:hover::before { opacity: 0.05; }
+
+.qcard-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+}
+.qcard-body { flex: 1; }
+.qcard-name {
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px; font-weight: 700; color: var(--text);
+  margin-bottom: 4px;
+}
+.qcard-desc { font-size: 11.5px; color: var(--text3); line-height: 1.5; }
+.qcard-arrow {
+  font-size: 16px; color: var(--text3);
+  transition: transform 0.15s, color 0.15s;
+  align-self: flex-end;
+}
+.qcard:hover .qcard-arrow { transform: translate(2px,-2px); color: var(--text2); }
+.qcard-tag {
+  display: inline-flex; align-items: center;
+  font-size: 9.5px; font-weight: 600; letter-spacing: .8px;
+  text-transform: uppercase; padding: 2px 7px;
+  border-radius: 20px; border: 1px solid transparent;
+  margin-top: 4px;
+}
+
+/* ═══════════════════════════════════
+   LINK ROWS — smaller tiles
+═══════════════════════════════════ */
+.link-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.lcard {
+  background: var(--ink2); border: 1px solid var(--mist);
+  border-radius: 10px; padding: 14px 16px;
+  text-decoration: none; display: flex; align-items: center; gap: 10px;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+.lcard:hover { background: var(--ink3); border-color: var(--mist2); transform: translateY(-2px); }
+.lcard-icon { font-size: 16px; flex-shrink: 0; }
+.lcard-info { flex: 1; min-width: 0; }
+.lcard-name { font-size: 12.5px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lcard-sub  { font-size: 10.5px; color: var(--text3); margin-top: 1px; }
+.lcard-ext  { font-size: 12px; color: var(--text3); flex-shrink: 0; }
+
+/* ═══════════════════════════════════
+   TEAM SECTION
+═══════════════════════════════════ */
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.team-card {
+  background: var(--ink2); border: 1px solid var(--mist);
+  border-radius: 12px; padding: 16px 12px;
+  text-align: center; transition: border-color 0.15s, transform 0.15s;
+}
+.team-card:hover { border-color: var(--mist2); transform: translateY(-2px); }
+.team-avatar {
+  width: 44px; height: 44px; border-radius: 50%; margin: 0 auto 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: #fff;
+}
+.team-name { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.team-role { font-size: 10.5px; color: var(--text3); }
+.team-contact {
+  margin-top: 8px; display: flex; justify-content: center; gap: 6px;
+}
+.team-contact a {
+  width: 24px; height: 24px; border-radius: 6px;
+  background: var(--mist); border: 1px solid var(--mist2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; text-decoration: none; color: var(--text2);
+  transition: background 0.12s, color 0.12s;
+}
+.team-contact a:hover { background: var(--mist2); color: var(--text); }
+
+/* ═══════════════════════════════════
+   NOTICE BOARD
+═══════════════════════════════════ */
+.notice-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  margin-bottom: 10px;
+}
+@media(max-width:600px){ .notice-grid{ grid-template-columns:1fr; } }
+
+.notice-card {
+  background: var(--ink2); border: 1px solid var(--mist);
+  border-radius: 10px; padding: 14px 16px;
+  display: flex; gap: 12px; align-items: flex-start;
+}
+.notice-dot {
+  width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0;
+}
+.notice-title { font-size: 12.5px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+.notice-body  { font-size: 11.5px; color: var(--text3); line-height: 1.5; }
+.notice-time  { font-size: 10px; color: var(--text3); margin-top: 5px; font-family: 'JetBrains Mono',monospace; }
+
+/* ═══════════════════════════════════
+   FOOTER
+═══════════════════════════════════ */
+footer {
+  border-top: 1px solid var(--mist);
+  margin-top: 60px;
+  padding: 20px 32px;
+  display: flex; align-items: center; justify-content: space-between;
+  max-width: 1280px; margin: 60px auto 0; flex-wrap: wrap; gap: 10px;
+}
+.footer-left  { font-size: 12px; color: var(--text3); }
+.footer-right { font-family: 'JetBrains Mono',monospace; font-size: 11px; color: var(--text3); }
+
+/* ── ANIMATIONS ── */
+.fade-in { opacity: 0; transform: translateY(16px); animation: fadeUp .5s ease forwards; }
+@keyframes fadeUp { to { opacity:1; transform:translateY(0); } }
+.delay-1{ animation-delay:.05s } .delay-2{ animation-delay:.1s }
+.delay-3{ animation-delay:.15s } .delay-4{ animation-delay:.2s }
+.delay-5{ animation-delay:.25s } .delay-6{ animation-delay:.3s }
+
+@media(max-width:768px){
+  .wrap,.hero,.section-divider{ padding-left:16px; padding-right:16px; }
+  .nav-inner{ padding:12px 16px; }
+  .hero{ padding:40px 16px 32px; }
+  footer{ padding:16px; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+</style>
+</head>
+<body>
+
+<!-- BLOBS -->
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+<div class="blob blob3"></div>
+
+<!-- HEADER -->
+<header>
+  <div class="nav-inner">
+    <a class="nav-logo" href="#">
+      <span style="font-family:'Outfit',sans-serif;font-weight:800;font-size:16px;letter-spacing:.5px">AQ8</span><span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:300;font-size:15px;letter-spacing:2px;color:rgba(255,255,255,0.55);margin-left:6px">Design</span>
+    </a>
+    <div class="nav-right">
+      <a class="nav-pill" href="#lienket">Liên kết</a>
+      <a class="nav-pill" href="#team">Team</a>
+      <a class="nav-pill" href="#thongbao">Thông báo</a>
+      <div class="nav-time" id="nav-clock">--:--</div>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow">Internal Hub · AQ8 Vietnam</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:300;font-size:clamp(15px,1.8vw,20px);letter-spacing:1.5px;color:rgba(255,255,255,0.38);margin-bottom:10px">Chào, bạn đã trở lại.</div>
+    <h1 class="hero-title" style="font-family:'Outfit',sans-serif;font-weight:800;font-size:clamp(42px,5.5vw,72px);letter-spacing:-2.5px;line-height:1.0;margin-bottom:18px">
+      Không gian<br>
+      <span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:300;font-size:clamp(48px,6vw,80px);letter-spacing:-1px;background:linear-gradient(90deg,#F5F0EB 0%,#C4705A 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">làm việc.</span>
+    </h1>
+    <p class="hero-sub" style="font-family:'Outfit',sans-serif;font-weight:300;font-size:14px;letter-spacing:.2px;line-height:1.7;color:rgba(255,255,255,0.45)">Tất cả công cụ, tài liệu và đường dẫn nội bộ<br>của AQ8 tập trung tại đây.</p>
+  </div>
+  <div class="hero-right">
+    <div class="hero-stat">
+      <div class="hero-stat-val" style="
+        font-family:'Outfit',sans-serif;
+        font-size:clamp(52px,6vw,80px);
+        font-weight:800;
+        letter-spacing:-4px;
+        background:linear-gradient(135deg,#C4705A 0%,#7B2D2D 60%,#C4705A 100%);
+        background-size:200% auto;
+        -webkit-background-clip:text;
+        -webkit-text-fill-color:transparent;
+        background-clip:text;
+        animation:shimmer 3s linear infinite;
+        filter:drop-shadow(0 0 18px rgba(196,112,90,0.45));
+      ">10</div>
+      <div class="hero-stat-lbl" style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.35)">thành viên · đang hoạt động</div>
+    </div>
+    <div class="hero-date" id="hero-date">—</div>
+  </div>
+</div>
+
+<!-- DIVIDER -->
+<div class="section-divider"><div class="divider-line"></div></div>
+
+<div class="wrap" id="lienket">
+
+  <!-- SECTION 1: CÔNG CỤ CHÍNH -->
+  <div class="section-label fade-in">Công cụ chính</div>
+  <div class="quick-grid fade-in delay-1">
+
+    <a class="qcard" href="THAY_LINK_DASHBOARD" target="_blank" style="--card-color:var(--teal)">
+      <div class="qcard-icon">📊</div>
+      <div class="qcard-body">
+        <div class="qcard-name">Dashboard Dự án</div>
+        <div class="qcard-desc">Hoa hồng, trạng thái thanh toán, tổng quan công trình</div>
+        <div class="qcard-tag" style="background:rgba(45,212,191,.1);color:var(--teal);border-color:rgba(45,212,191,.2)">Apps Script</div>
+      </div>
+      <div class="qcard-arrow">↗</div>
+    </a>
+
+    <a class="qcard" href="THAY_LINK_SHEET" target="_blank" style="--card-color:#34d399">
+      <div class="qcard-icon">📋</div>
+      <div class="qcard-body">
+        <div class="qcard-name">Bảng tổng hợp CT</div>
+        <div class="qcard-desc">Dữ liệu gốc tất cả công trình thiết kế & thi công</div>
+        <div class="qcard-tag" style="background:rgba(52,211,153,.1);color:#34d399;border-color:rgba(52,211,153,.2)">Google Sheet</div>
+      </div>
+      <div class="qcard-arrow">↗</div>
+    </a>
+
+    <a class="qcard" href="THAY_LINK_LARK" target="_blank" style="--card-color:var(--sky)">
+      <div class="qcard-icon">🪶</div>
+      <div class="qcard-body">
+        <div class="qcard-name">Lark Workspace</div>
+        <div class="qcard-desc">Nhắn tin, họp video, tài liệu và task nội bộ team</div>
+        <div class="qcard-tag" style="background:rgba(56,189,248,.1);color:var(--sky);border-color:rgba(56,189,248,.2)">Lark Suite</div>
+      </div>
+      <div class="qcard-arrow">↗</div>
+    </a>
+
+    <a class="qcard" href="THAY_LINK_DRIVE" target="_blank" style="--card-color:var(--amber)">
+      <div class="qcard-icon">🗂️</div>
+      <div class="qcard-body">
+        <div class="qcard-name">Google Drive</div>
+        <div class="qcard-desc">File thiết kế, hồ sơ kỹ thuật, tài liệu dự án</div>
+        <div class="qcard-tag" style="background:rgba(251,191,36,.1);color:var(--amber);border-color:rgba(251,191,36,.2)">Drive</div>
+      </div>
+      <div class="qcard-arrow">↗</div>
+    </a>
+
+  </div>
+
+  <!-- SECTION 2: TÀI LIỆU & QUY TRÌNH -->
+  <div class="section-label fade-in delay-2" style="margin-top:28px">Tài liệu & Quy trình</div>
+  <div class="link-grid fade-in delay-3">
+
+    <a class="lcard" href="THAY_LINK" target="_blank">
+      <div class="lcard-icon">📐</div>
+      <div class="lcard-info">
+        <div class="lcard-name">Quy trình thiết kế</div>
+        <div class="lcard-sub">Tiêu chuẩn & checklist</div>
+      </div>
+      <div class="lcard-ext">↗</div>
+    </a>
+
+    <a class="lcard" href="THAY_LINK" target="_blank">
+      <div class="lcard-icon">🏗️</div>
+      <div class="lcard-info">
+        <div class="lcard-name">Quy trình thi công</div>
+        <div class="lcard-sub">Giám sát & nghiệm thu</div>
+      </div>
+      <div class="lcard-ext">↗</div>
+    </a>
+
+    <a class="lcard" href="THAY_LINK" target="_blank">
+      <div class="lcard-icon">📄</div>
+      <div class="lcard-info">
+        <div class="lcard-name">Hợp đồng mẫu</div>
+        <div class="lcard-sub">TK, TC, tư vấn</div>
+      </div>
+      <div class="lcard-ext">↗</div>
+    </a>
+
+    <a class="lcard" href="THAY_LINK" target="_blank">
+      <div class="lcard-icon">💰</div>
+      <div class="lcard-info">
+        <div class="lcard-name">Bảng giá dịch vụ</div>
+        <div class="lcard-sub">Nội bộ · Cập nhật 2025</div>
+      </div>
+      <div class="lcard-ext">↗</div>
+    </a>
+
+    <a class="lcard" href="THAY_LINK" target="_blank">
+      <div class="lcard-icon">🎨</div>
+      <div class="lcard-info">
+        <div class="lcard-name">Brand Guidelines</div>
+        <div class="lcard-sub">Logo, màu, font AQ8</div>
+      </div>
+      <div class="lcard-ext">↗</div>
+    </a>
+
+    <a class="lcard" href="THAY_LINK" target="_blank">
+      <div class="lcard-icon">📊</div>
+      <div class="lcard-info">
+        <div class="lcard-name">Báo cáo tháng</div>
+        <div class="lcard-sub">Tổng hợp kết quả KD</div>
+      </div>
+      <div class="lcard-ext">↗</div>
+    </a>
+
+    <a class="lcard" href="THAY_LINK" target="_blank">
+      <div class="lcard-icon">⚙️</div>
+      <div class="lcard-info">
+        <div class="lcard-name">Nội quy công ty</div>
+        <div class="lcard-sub">Chính sách & quy định</div>
+      </div>
+      <div class="lcard-ext">↗</div>
+    </a>
+
+    <a class="lcard" href="THAY_LINK" target="_blank">
+      <div class="lcard-icon">🗓️</div>
+      <div class="lcard-info">
+        <div class="lcard-name">Lịch nghỉ lễ 2025</div>
+        <div class="lcard-sub">Lịch chính thức</div>
+      </div>
+      <div class="lcard-ext">↗</div>
+    </a>
+
+  </div>
+
+  <!-- SECTION 3: CÔNG CỤ AI & THIẾT KẾ -->
+  <div class="section-label fade-in delay-3" style="margin-top:28px">AI & Thiết kế</div>
+  <div class="link-grid fade-in delay-4">
+
+    <a class="lcard" href="https://chatgpt.com" target="_blank">
+      <div class="lcard-icon">🤖</div>
+      <div class="lcard-info">
+        <div class="lcard-name">ChatGPT</div>
+        <div class="lcard-sub">AI tổng hợp</div>
+      </div>
+      <div class="lcard-ext">↗</div>
+    </a>
+
+    <a class="lcard" href="https://claude.ai" target="_blank">
+      <div class="lcard-icon">✦</div>
+      <div class="lcard-info">
+        <div class="lcard-name">Claude</div>
+        <div class="lcard-sub">AI viết & phân tích</div>
+      </div>
+      <div class="lcard-ext">↗</div>
+    </a>
+
+    <a class="lcard" href="https://labs.google/flow" target="_blank">
+      <div class="lcard-icon">🎬</div>
+      <div class="lcard-info">
+        <div class="lcard-name">Google Flow</div>
+        <div class="lcard-sub">Tạo ảnh & video AI</div>
+      </div>
+      <div class="lcard-ext">↗</div>
+    </a>
+
+    <a class="lcard" href="https://www.canva.com" target="_blank">
+      <div class="lcard-icon">🎨</div>
+      <div class="lcard-info">
+        <div class="lcard-name">Canva</div>
+        <div class="lcard-sub">Thiết kế nhanh</div>
+      </div>
+      <div class="lcard-ext">↗</div>
+    </a>
+
+  </div>
+
+  </div>
+</div>
+
+<!-- DIVIDER -->
+<div class="section-divider" style="margin-top:32px"><div class="divider-line"></div></div>
+
+<!-- NOTICE BOARD -->
+<div class="wrap" id="thongbao">
+  <div class="section-label fade-in">Thông báo nội bộ</div>
+  <div class="notice-grid fade-in delay-1">
+
+    <!-- Thêm/sửa thông báo tại đây -->
+    <div class="notice-card">
+      <div class="notice-dot" style="background:var(--teal)"></div>
+      <div>
+        <div class="notice-title">Dashboard hoa hồng đã cập nhật</div>
+        <div class="notice-body">Trang 1 (Tổng quan) và Trang 3 (Hoa hồng theo tháng) đã hoàn thiện. Tự động refresh mỗi 90 giây.</div>
+        <div class="notice-time">19/04/2026</div>
+      </div>
+    </div>
+
+    <div class="notice-card">
+      <div class="notice-dot" style="background:var(--amber)"></div>
+      <div>
+        <div class="notice-title">Cập nhật quy trình nghiệm thu</div>
+        <div class="notice-body">Bổ sung bước kiểm tra hoàn thiện bề mặt trước khi bàn giao. Xem tài liệu quy trình thi công để biết chi tiết.</div>
+        <div class="notice-time">15/04/2026</div>
+      </div>
+    </div>
+
+    <div class="notice-card">
+      <div class="notice-dot" style="background:var(--violet)"></div>
+      <div>
+        <div class="notice-title">Họp team tháng 4</div>
+        <div class="notice-body">Thứ 6 ngày 25/04 lúc 17:00 — tổng kết tháng, review dự án đang chạy. Link meeting trên Lark.</div>
+        <div class="notice-time">12/04/2026</div>
+      </div>
+    </div>
+
+    <div class="notice-card">
+      <div class="notice-dot" style="background:var(--coral)"></div>
+      <div>
+        <div class="notice-title">Nhắc nhở: cập nhật trạng thái sheet</div>
+        <div class="notice-body">Mọi người cập nhật trạng thái thanh toán và quyết toán vào sheet trước ngày 28 hàng tháng.</div>
+        <div class="notice-time">01/04/2026</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="wrap">
+  <footer>
+    <div class="footer-left">© 2026 AQ8 Vietnam · Internal use only · Không chia sẻ ra ngoài</div>
+    <div class="footer-right" id="footer-build">build · v1.0</div>
+  </footer>
+</div>
+
+<script>
+// ── Clock ──
+function updateClock(){
+  const now = new Date();
+  const t = now.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});
+  const d = now.toLocaleDateString('vi-VN',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
+  const el = document.getElementById('nav-clock');
+  if(el) el.textContent = t;
+  const hd = document.getElementById('hero-date');
+  if(hd) hd.textContent = d;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ── Staggered fade-in on scroll ──
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.style.animationPlayState='running'; });
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-in').forEach(el => {
+  el.style.animationPlayState = 'paused';
+  observer.observe(el);
+});
+
+// ── Build time ──
+document.getElementById('footer-build').textContent =
+  'build · v1.0 · ' + new Date().toLocaleDateString('vi-VN');
+</script>
+</body>
+</html>
